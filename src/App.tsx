@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import type {SongNode, Command, DelayCommand, RegisterCommand, CallNodeCommand} from './types/gbsong';
-import { GB_REGISTERS, formatCommandHex, getValidationError, getTypeColor } from './utils';
-import { FolderPlus, Trash2, ArrowUp, ArrowDown, AlertCircle, Hash, Code } from 'lucide-react';
+import { parseCHeader } from './loaders/c_header';
+import { FolderPlus, Trash2, ArrowUp, ArrowDown, AlertCircle, Hash, Code, Upload } from 'lucide-react';
 import './App.css';
+import {formatCommandHex, GB_REGISTERS, getCommandValidationError} from "./snd_regs.ts";
+import {getTypeColor} from "./helpers.ts";
 
 const INITIAL_NODES: SongNode[] = [
   {
@@ -30,8 +32,36 @@ const INITIAL_NODES: SongNode[] = [
 export default function App() {
   const [nodes, setNodes] = useState<SongNode[]>(INITIAL_NODES);
   const [selectedNodeId, setSelectedNodeId] = useState<number>(0);
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [importText, setImportText] = useState<string>('');
+  const [importError, setImportError] = useState<string | null>(null);
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId) || nodes[0];
+
+  // --- Header File Import Handler ---
+  const handleImport = (codeToParse: string) => {
+    try {
+      setImportError(null);
+      const { nodes: parsedNodes, mainNodeId } = parseCHeader(codeToParse);
+      setNodes(parsedNodes);
+      setSelectedNodeId(mainNodeId);
+      setShowImportModal(false);
+      setImportText('');
+    } catch (err: any) {
+      setImportError(err.message || 'Failed to parse C header file.');
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (content) handleImport(content);
+    };
+    reader.readAsText(file);
+  };
 
   // --- Node Actions ---
   const addNode = () => {
@@ -116,9 +146,14 @@ export default function App() {
         <div className="sidebar">
           <div className="sidebar-header">
             <h3><Code size={18} color="#89b4fa" /> GB Song Nodes</h3>
-            <button onClick={addNode} className="primary-btn">
-              <FolderPlus size={14} /> Add Node
-            </button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button onClick={() => setShowImportModal(true)} className="primary-btn" title="Import C Header File">
+                <Upload size={14} /> Import .h
+              </button>
+              <button onClick={addNode} className="primary-btn">
+                <FolderPlus size={14} /> Add
+              </button>
+            </div>
           </div>
 
           <div className="node-list">
@@ -132,7 +167,7 @@ export default function App() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Hash size={14} color="#f9e2af" />
-                      <span>Node #{node.id}</span>
+                      <span>{node.id === 999 ? 'Main Track (999)' : `Node #${node.id}`}</span>
                       <span className="badge">{node.commands.length} cmds</span>
                     </div>
                     {nodes.length > 1 && (
@@ -155,7 +190,7 @@ export default function App() {
           {selectedNode ? (
               <div>
                 <div className="main-header">
-                  <h2>Editing Node #{selectedNode.id}</h2>
+                  <h2>Editing {selectedNode.id === 999 ? 'Main Track (Node #999)' : `Node #${selectedNode.id}`}</h2>
                   <div className="add-cmd-group">
                     <button onClick={() => addCommand(selectedNode.id, 'DELAY')} className="cmd-add-btn">+ Delay</button>
                     <button onClick={() => addCommand(selectedNode.id, 'REGISTER_WRITE')} className="cmd-add-btn">+ Reg Write</button>
@@ -179,7 +214,7 @@ export default function App() {
                     </thead>
                     <tbody>
                     {selectedNode.commands.map((cmd, idx) => {
-                      const validationErr = getValidationError(cmd, nodes);
+                      const validationErr = getCommandValidationError(cmd, nodes);
                       return (
                           <React.Fragment key={cmd.id}>
                             <tr className={validationErr ? 'has-error' : ''}>
@@ -217,13 +252,13 @@ export default function App() {
                                       <label className="label">Delay (vblanks):</label>
                                       <input
                                           type="number"
-                                          min={1}
+                                          min={0}
                                           max={127}
                                           value={(cmd as DelayCommand).delay}
-                                          onChange={(e) => updateCommand(selectedNode.id, cmd.id, { delay: parseInt(e.target.value) || 0 })}
+                                          onChange={(e) => updateCommand(selectedNode.id, cmd.id, { delay: Math.max(0, parseInt(e.target.value) || 0) })}
                                           className="input-number"
                                       />
-                                      <span className="hint">(1 - 127)</span>
+                                      <span className="hint">(0 - 127 vblanks)</span>
                                     </div>
                                 )}
 
@@ -236,9 +271,7 @@ export default function App() {
                                           className="input-select"
                                       >
                                         {Object.entries(GB_REGISTERS).map(([offsetStr, name]) => (
-                                            <option key={offsetStr} value={parseInt(offsetStr)}>
-                                              0x{parseInt(offsetStr).toString(16).padStart(2, '0').toUpperCase()} : {name}
-                                            </option>
+                                            <option key={offsetStr} value={parseInt(offsetStr)}>{name.toString()}</option>
                                         ))}
                                       </select>
 
@@ -265,7 +298,7 @@ export default function App() {
                                       >
                                         {nodes.map(n => (
                                             <option key={n.id} value={n.id}>
-                                              Node #{n.id} {n.id === selectedNode.id ? '(Self)' : ''}
+                                              {n.id === 999 ? 'Main Track (999)' : `Node #${n.id}`} {n.id === selectedNode.id ? '(Self)' : ''}
                                             </option>
                                         ))}
                                       </select>
@@ -308,6 +341,66 @@ export default function App() {
               <div>Select or create a node to edit.</div>
           )}
         </div>
+
+        {/* Import Modal */}
+        {showImportModal && (
+            <div style={modalStyles.overlay}>
+              <div style={modalStyles.modal}>
+                <h3 style={{ marginTop: 0 }}>Import C Header (.h)</h3>
+                <p style={{ fontSize: '13px', color: '#a6adc8' }}>
+                  Upload a <code>.h</code> file or paste its content below. Supports compressed (with pointer table) and uncompressed formats.
+                </p>
+
+                <input type="file" accept=".h,.c,.txt" onChange={handleFileUpload} style={{ marginBottom: '12px' }} />
+
+                <textarea
+                    rows={10}
+                    placeholder="Paste C header content here..."
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    style={modalStyles.textarea}
+                />
+
+                {importError && <div style={{ color: '#f38ba8', fontSize: '12px', marginTop: '8px' }}>{importError}</div>}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+                  <button onClick={() => setShowImportModal(false)} className="cmd-add-btn">Cancel</button>
+                  <button onClick={() => handleImport(importText)} className="primary-btn">Parse & Load</button>
+                </div>
+              </div>
+            </div>
+        )}
       </div>
   );
 }
+
+const modalStyles: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  },
+  modal: {
+    backgroundColor: '#1e1e2e',
+    padding: '24px',
+    borderRadius: '8px',
+    width: '600px',
+    maxWidth: '90%',
+    border: '1px solid #313244'
+  },
+  textarea: {
+    width: '100%',
+    boxSizing: 'border-box',
+    backgroundColor: '#11111b',
+    color: '#cdd6f4',
+    border: '1px solid #45475a',
+    borderRadius: '4px',
+    padding: '8px',
+    fontFamily: 'monospace',
+    fontSize: '12px'
+  }
+};
