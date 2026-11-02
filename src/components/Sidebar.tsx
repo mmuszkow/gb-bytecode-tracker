@@ -1,6 +1,6 @@
 import React from 'react';
 import type { SongNode } from '../types/gbsong';
-import { Code, Upload, FolderPlus, Hash, Trash2 } from 'lucide-react';
+import { FolderPlus, Hash, Trash2 } from 'lucide-react';
 
 interface SidebarProps {
     nodes: SongNode[];
@@ -8,7 +8,6 @@ interface SidebarProps {
     onSelectNode: (id: number) => void;
     onAddNode: () => void;
     onDeleteNode: (id: number) => void;
-    onOpenImport: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -17,20 +16,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                     onSelectNode,
                                                     onAddNode,
                                                     onDeleteNode,
-                                                    onOpenImport
                                                 }) => {
     return (
         <div className="sidebar">
             <div className="sidebar-header">
-                <h3><Code size={18} color="#89b4fa" /> GB Song Nodes</h3>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                    <button onClick={onOpenImport} className="primary-btn" title="Import C Header File">
-                        <Upload size={14} /> Import .h
-                    </button>
-                    <button onClick={onAddNode} className="primary-btn">
-                        <FolderPlus size={14} /> Add
-                    </button>
-                </div>
+                <h3>Song Nodes</h3>
+                <button onClick={onAddNode} className="primary-btn">
+                    <FolderPlus size={14} /> Add Node
+                </button>
             </div>
 
             <div className="node-list">
