@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import type { SongNode } from '../types/gbsong';
 import { ListView } from './ListView';
-import { TreeView } from './TreeView';
-import { FolderPlus, List, FolderTree } from 'lucide-react';
+import { GraphView } from './GraphView';
+import { FolderPlus, List, Network } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -20,7 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                     onAddNode,
                                                     onDeleteNode,
                                                 }) => {
-    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'graph'>('list');
 
     return (
         <div className="sidebar">
@@ -41,10 +41,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <List size={14} /> List View
                     </button>
                     <button
-                        className={`switch-btn ${viewMode === 'tree' ? 'active' : ''}`}
-                        onClick={() => setViewMode('tree')}
+                        className={`switch-btn ${viewMode === 'graph' ? 'active' : ''}`}
+                        onClick={() => setViewMode('graph')}
                     >
-                        <FolderTree size={14} /> Tree View
+                        <Network size={14} /> Graph View
                     </button>
                 </div>
             </div>
@@ -59,11 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onDeleteNode={onDeleteNode}
                     />
                 ) : (
-                    <TreeView
+                    <GraphView
                         nodes={nodes}
                         selectedNodeId={selectedNodeId}
                         onSelectNode={onSelectNode}
-                        onDeleteNode={onDeleteNode}
                     />
                 )}
             </div>
