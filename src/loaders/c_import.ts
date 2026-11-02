@@ -99,6 +99,10 @@ function disassembleBytes(bytes: number[]): Command[] {
         } else if (b === 0xFC) {
             commands.push({ id: cmdId, type: 'RET' });
             i += 1;
+        } else if (b === 0xFE) { // CMD_WAVE_RAM (1 opcode + 16 sample bytes = 17 bytes)
+            const samples = bytes.slice(i + 1, i + 17);
+            commands.push({ id: cmdId, type: 'WAVE_RAM', samples });
+            i += 17; // Skip opcode + 16 sample bytes
         } else if (b === 0xFF) {
             commands.push({ id: cmdId, type: 'END' });
             i += 1;

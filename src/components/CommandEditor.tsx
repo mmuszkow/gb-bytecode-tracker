@@ -1,7 +1,15 @@
 import React from 'react';
-import type { SongNode, Command, DelayCommand, RegisterCommand, CallNodeCommand } from '../types/gbsong';
-import { formatCommandHex, GB_REGISTERS, getCommandValidationError } from '../snd_regs.ts';
+import type {
+    SongNode,
+    Command,
+    DelayCommand,
+    RegisterCommand,
+    CallNodeCommand,
+    WaveRamCommand,
+} from '../types/gbsong';
+import { formatCommandHex, GB_REGISTERS, getCommandValidationError } from '../snd_regs';
 import { getTypeColor } from '../helpers';
+import { WaveRamVisualizer } from './WaveRamVisualizer';
 import { ArrowUp, ArrowDown, Trash2, AlertCircle } from 'lucide-react';
 
 interface CommandEditorProps {
@@ -21,14 +29,13 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
                                                                 onAddCommand,
                                                                 onUpdateCommand,
                                                                 onDeleteCommand,
-                                                                onMoveCommand
+                                                                onMoveCommand,
                                                             }) => {
     const defaultDisplayName = selectedNode.id === 999 ? 'Main Track' : `Node #${selectedNode.id}`;
 
     return (
         <div className="main-content">
             <div className="main-header">
-                {/* Node Name Editor */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ color: '#89b4fa', fontWeight: 'bold', fontSize: '13px' }}>
             #{selectedNode.id}
@@ -46,12 +53,11 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
                             borderRadius: '4px',
                             fontSize: '15px',
                             fontWeight: 'bold',
-                            minWidth: '220px'
+                            minWidth: '220px',
                         }}
                     />
                 </div>
 
-                {/* Action Buttons to Add Commands */}
                 <div className="add-cmd-group">
                     <button onClick={() => onAddCommand('DELAY')} className="cmd-add-btn">+ Delay</button>
                     <button onClick={() => onAddCommand('REGISTER_WRITE')} className="cmd-add-btn">+ Reg Write</button>
@@ -153,7 +159,7 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
 
                                         {(cmd.type === 'CALL_NODE8' || cmd.type === 'CALL_NODE16') && (
                                             <div className="param-row">
-                                                <label className="label">Node ID:</label>
+                                                <label className="label">Target Node ID:</label>
                                                 <select
                                                     value={(cmd as CallNodeCommand).targetNodeId}
                                                     onChange={(e) => onUpdateCommand(cmd.id, { targetNodeId: parseInt(e.target.value) })}
@@ -169,6 +175,14 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
                                                     })}
                                                 </select>
                                             </div>
+                                        )}
+
+                                        {/* Standalone Wave RAM Visualizer */}
+                                        {cmd.type === 'WAVE_RAM' && (
+                                            <WaveRamVisualizer
+                                                payload={(cmd as WaveRamCommand).samples || new Array(16).fill(0)}
+                                                onChange={(newPayload) => onUpdateCommand(cmd.id, { samples: newPayload })}
+                                            />
                                         )}
 
                                         {cmd.type === 'RET' && <span className="hint">Returns from subroutine (0xFC)</span>}

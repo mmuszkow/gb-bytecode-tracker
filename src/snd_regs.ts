@@ -57,6 +57,8 @@ export function formatCommandHex(cmd: Command): string {
             return `0xFB [Node #${cmd.targetNodeId}]`;
         case 'CALL_NODE16':
             return `0xFA [Node #${cmd.targetNodeId}]`;
+        case 'WAVE_RAM':
+            return `0xFE (16 bytes)`;
         case 'RET':
             return `0xFC`;
         case 'END':

@@ -21,6 +21,11 @@ export interface CallNodeCommand extends BaseCommand {
     targetNodeId: number;
 }
 
+export interface WaveRamCommand extends BaseCommand {
+    type: 'WAVE_RAM';
+    samples: number[]; // 16 of them
+}
+
 export interface ReturnCommand extends BaseCommand {
     type: 'RET'; // 0xFC
 }
@@ -29,7 +34,7 @@ export interface EndCommand extends BaseCommand {
     type: 'END'; // 0xFF
 }
 
-export type Command = DelayCommand | RegisterCommand | CallNodeCommand | ReturnCommand | EndCommand;
+export type Command = DelayCommand | RegisterCommand | CallNodeCommand | WaveRamCommand | ReturnCommand | EndCommand;
 
 export interface SongNode {
     id: number;

@@ -78,6 +78,13 @@ function serializeCommands(commands: Command[]): number[] {
                 bytes.push(cmd.targetNodeId & 0xFF);
                 bytes.push((cmd.targetNodeId >> 8) & 0xFF);
                 break;
+            case 'WAVE_RAM':
+                bytes.push(0xFE);
+                const payload = cmd.samples || new Array(16).fill(0);
+                for (let k = 0; k < 16; k++) {
+                    bytes.push((payload[k] ?? 0) & 0xFF);
+                }
+                break;
             case 'RET':
                 bytes.push(0xFC);
                 break;

@@ -98,6 +98,14 @@ export class GameBoyAudioPlayer {
                     }
                     break;
 
+                case 'WAVE_RAM':
+                    const wavePayload = (cmd as any).samples || [];
+                    for (let idx = 0; idx < 16; idx++) {
+                        const hwAddress = 0x20 + idx;
+                        this.writeRegister(hwAddress, wavePayload[idx] ?? 0);
+                    }
+                    break;
+
                 case 'RET':
                     if (this.stack.length > 0) {
                         const returnFrame = this.stack.pop()!;
