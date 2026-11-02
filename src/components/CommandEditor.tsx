@@ -125,7 +125,7 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
 
                                         {cmd.type === 'REGISTER_WRITE' && (
                                             <div className="param-row">
-                                                <label className="label">Target Register:</label>
+                                                <label className="label">Register:</label>
                                                 <select
                                                     value={(cmd as RegisterCommand).registerOffset}
                                                     onChange={(e) => onUpdateCommand(cmd.id, { registerOffset: parseInt(e.target.value) })}
@@ -153,7 +153,7 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
 
                                         {(cmd.type === 'CALL_NODE8' || cmd.type === 'CALL_NODE16') && (
                                             <div className="param-row">
-                                                <label className="label">Target Node ID:</label>
+                                                <label className="label">Node ID:</label>
                                                 <select
                                                     value={(cmd as CallNodeCommand).targetNodeId}
                                                     onChange={(e) => onUpdateCommand(cmd.id, { targetNodeId: parseInt(e.target.value) })}

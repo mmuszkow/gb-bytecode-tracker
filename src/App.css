@@ -20,13 +20,14 @@ body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* --- App Outer Layout --- */
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #11111b;
+  background-color: var(--bg-sidebar);
 }
 
 .app-body {
@@ -49,76 +50,32 @@ body {
   overflow: hidden;
 }
 
-.sidebar {
-  width: 100%; /* Fill the wrapper completely */
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: #1e1e2e;
-  box-sizing: border-box;
-  padding: 1rem;
-}
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.sidebar-header h3 {
-  margin: 0;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.node-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-}
-
-.node-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-active);
-  background-color: var(--bg-card);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.node-item:hover {
-  border-color: var(--accent-blue);
-}
-
-.node-item.selected {
-  background-color: var(--bg-hover);
-  border-color: var(--accent-blue);
-  font-weight: bold;
-}
-
-.badge {
-  font-size: 11px;
+/* --- Resizer Bar --- */
+.resizer {
+  width: 6px;
+  min-width: 6px;
   background-color: var(--border-color);
-  padding: 2px 6px;
-  border-radius: 10px;
-  color: var(--text-muted);
+  cursor: col-resize;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  z-index: 10;
 }
 
+.resizer:hover,
+.resizer.resizing {
+  background-color: var(--accent-blue);
+}
+
+/* --- Main Content Area --- */
 .main-content {
   flex: 1;
-  min-width: 0; /* Critical: allows flex item to shrink below content width */
+  min-width: 0;
   height: 100%;
   overflow-y: auto;
   overflow-x: auto;
   box-sizing: border-box;
   padding: 16px;
-  background-color: #181825;
+  background-color: var(--bg-dark);
 }
 
 .main-header {
@@ -171,7 +128,7 @@ body {
   background-color: #2d1419;
 }
 
-/* --- UI Controls --- */
+/* --- Global UI Buttons & Inputs --- */
 .primary-btn {
   background-color: var(--accent-blue);
   color: var(--bg-sidebar);
@@ -272,19 +229,3 @@ body {
   opacity: 0.3;
   cursor: not-allowed;
 }
-
-.resizer {
-  width: 6px;
-  min-width: 6px;
-  background-color: #313244;
-  cursor: col-resize;
-  user-select: none;
-  transition: background-color 0.15s ease;
-  z-index: 10;
-}
-
-.resizer:hover,
-.resizer.resizing {
-  background-color: #89b4fa;
-}
-
