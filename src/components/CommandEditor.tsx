@@ -1,12 +1,13 @@
 import React from 'react';
 import type { SongNode, Command, DelayCommand, RegisterCommand, CallNodeCommand } from '../types/gbsong';
-import { formatCommandHex, GB_REGISTERS, getCommandValidationError } from '../snd_regs';
+import { formatCommandHex, GB_REGISTERS, getCommandValidationError } from '../snd_regs.ts';
 import { getTypeColor } from '../helpers';
 import { ArrowUp, ArrowDown, Trash2, AlertCircle } from 'lucide-react';
 
 interface CommandEditorProps {
     selectedNode: SongNode;
     nodes: SongNode[];
+    onUpdateNodeName: (name: string) => void;
     onAddCommand: (type: Command['type']) => void;
     onUpdateCommand: (commandId: string, updatedFields: Partial<Command>) => void;
     onDeleteCommand: (commandId: string) => void;
@@ -16,15 +17,41 @@ interface CommandEditorProps {
 export const CommandEditor: React.FC<CommandEditorProps> = ({
                                                                 selectedNode,
                                                                 nodes,
+                                                                onUpdateNodeName,
                                                                 onAddCommand,
                                                                 onUpdateCommand,
                                                                 onDeleteCommand,
                                                                 onMoveCommand
                                                             }) => {
+    const defaultDisplayName = selectedNode.id === 999 ? 'Main Track' : `Node #${selectedNode.id}`;
+
     return (
         <div className="main-content">
             <div className="main-header">
-                <h2>Editing {selectedNode.id === 999 ? 'Main Track (Node #999)' : `Node #${selectedNode.id}`}</h2>
+                {/* Node Name Editor */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ color: '#89b4fa', fontWeight: 'bold', fontSize: '13px' }}>
+            #{selectedNode.id}
+          </span>
+                    <input
+                        type="text"
+                        value={selectedNode.name ?? ''}
+                        placeholder={defaultDisplayName}
+                        onChange={(e) => onUpdateNodeName(e.target.value)}
+                        style={{
+                            backgroundColor: '#11111b',
+                            border: '1px solid #45475a',
+                            color: '#cdd6f4',
+                            padding: '6px 10px',
+                            borderRadius: '4px',
+                            fontSize: '15px',
+                            fontWeight: 'bold',
+                            minWidth: '220px'
+                        }}
+                    />
+                </div>
+
+                {/* Action Buttons to Add Commands */}
                 <div className="add-cmd-group">
                     <button onClick={() => onAddCommand('DELAY')} className="cmd-add-btn">+ Delay</button>
                     <button onClick={() => onAddCommand('REGISTER_WRITE')} className="cmd-add-btn">+ Reg Write</button>
@@ -111,7 +138,7 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
                                                     ))}
                                                 </select>
 
-                                                <label className="label">Value (Hex):</label>
+                                                <label className="label">Value:</label>
                                                 <input
                                                     type="text"
                                                     value={`0x${(cmd as RegisterCommand).value.toString(16).padStart(2, '0').toUpperCase()}`}
@@ -132,11 +159,14 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
                                                     onChange={(e) => onUpdateCommand(cmd.id, { targetNodeId: parseInt(e.target.value) })}
                                                     className="input-select"
                                                 >
-                                                    {nodes.map((n) => (
-                                                        <option key={n.id} value={n.id}>
-                                                            {n.id === 999 ? 'Main Track (999)' : `Node #${n.id}`} {n.id === selectedNode.id ? '(Self)' : ''}
-                                                        </option>
-                                                    ))}
+                                                    {nodes.map((n) => {
+                                                        const label = n.name && n.name.trim() !== '' ? n.name : (n.id === 999 ? 'Main Track (999)' : `Node #${n.id}`);
+                                                        return (
+                                                            <option key={n.id} value={n.id}>
+                                                                {label} {n.id === selectedNode.id ? '(Self)' : ''}
+                                                            </option>
+                                                        );
+                                                    })}
                                                 </select>
                                             </div>
                                         )}
@@ -175,5 +205,3 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
         </div>
     );
 };
-
-export default CommandEditor;

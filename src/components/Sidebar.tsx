@@ -29,6 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="node-list">
                 {nodes.map((node) => {
                     const isSelected = selectedNodeId === node.id;
+                    const displayName = node.name && node.name.trim() !== ''
+                        ? node.name
+                        : (node.id === 999 ? 'Main Track (999)' : `Node #${node.id}`);
+
                     return (
                         <div
                             key={node.id}
@@ -37,7 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Hash size={14} color="#f9e2af" />
-                                <span>{node.id === 999 ? 'Main Track (999)' : `Node #${node.id}`}</span>
+                                <span>{displayName}</span>
                                 <span className="badge">{node.commands.length} cmds</span>
                             </div>
                             {nodes.length > 1 && (
@@ -59,5 +63,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
     );
 };
-
-export default Sidebar;

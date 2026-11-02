@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { SongNode, Command } from './types/gbsong';
 import { TopNavbar } from './components/TopNavbar';
 import { Sidebar } from './components/Sidebar';
 import { CommandEditor } from './components/CommandEditor';
 import { ImportModal } from './components/ImportModal';
+import { ExportModal } from './components/ExportModal';
 import './App.css';
 
 const INITIAL_NODES: SongNode[] = [
     {
         id: 0,
+        name: 'Intro Pattern',
         commands: [
             { id: 'c-1', type: 'REGISTER_WRITE', registerOffset: 0x02, value: 0xF3 },
             { id: 'c-2', type: 'REGISTER_WRITE', registerOffset: 0x03, value: 0x83 },
@@ -20,6 +22,7 @@ const INITIAL_NODES: SongNode[] = [
     },
     {
         id: 1,
+        name: 'Subroutine Arp',
         commands: [
             { id: 'c-7', type: 'REGISTER_WRITE', registerOffset: 0x03, value: 0xC1 },
             { id: 'c-8', type: 'REGISTER_WRITE', registerOffset: 0x04, value: 0x87 },
@@ -33,18 +36,51 @@ export default function App() {
     const [nodes, setNodes] = useState<SongNode[]>(INITIAL_NODES);
     const [selectedNodeId, setSelectedNodeId] = useState<number>(0);
     const [showImportModal, setShowImportModal] = useState<boolean>(false);
+    const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+    // Splitter Resizing State
+    const [sidebarWidth, setSidebarWidth] = useState<number>(280);
+    const [isResizing, setIsResizing] = useState<boolean>(false);
 
     const selectedNode = nodes.find((n) => n.id === selectedNodeId) || nodes[0];
+
+    // --- Resizer Event Handlers ---
+    const handleMouseDown = () => setIsResizing(true);
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+            const newWidth = Math.min(Math.max(e.clientX, 180), 600);
+            setSidebarWidth(newWidth);
+        };
+
+        const handleMouseUp = () => setIsResizing(false);
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
 
     // --- Node Actions ---
     const addNode = () => {
         const nextId = nodes.length > 0 ? Math.max(...nodes.map((n) => n.id)) + 1 : 0;
         const newNode: SongNode = {
             id: nextId,
+            name: `Node #${nextId}`,
             commands: [{ id: `cmd-${Date.now()}`, type: 'RET' }]
         };
         setNodes((prev) => [...prev, newNode]);
         setSelectedNodeId(nextId);
+    };
+
+    const updateNodeName = (nodeId: number, name: string) => {
+        setNodes((prev) => prev.map((n) => (n.id === nodeId ? { ...n, name } : n)));
     };
 
     const deleteNode = (id: number) => {
@@ -125,27 +161,39 @@ export default function App() {
 
     return (
         <div className="app-container">
-            {/* Top Header Navbar */}
             <TopNavbar
                 nodes={nodes}
                 selectedNodeId={selectedNodeId}
                 onOpenImport={() => setShowImportModal(true)}
+                onOpenExport={() => setShowExportModal(true)}
             />
 
-            {/* Main Body Layout */}
-            <div className="app-body">
-                <Sidebar
-                    nodes={nodes}
-                    selectedNodeId={selectedNodeId}
-                    onSelectNode={setSelectedNodeId}
-                    onAddNode={addNode}
-                    onDeleteNode={deleteNode}
+            <div className={`app-body ${isResizing ? 'resizing' : ''}`}>
+                {/* Dynamic Width Wrapper */}
+                <div
+                    className="sidebar-wrapper"
+                    style={{ width: `${sidebarWidth}px` }}
+                >
+                    <Sidebar
+                        nodes={nodes}
+                        selectedNodeId={selectedNodeId}
+                        onSelectNode={setSelectedNodeId}
+                        onAddNode={addNode}
+                        onDeleteNode={deleteNode}
+                    />
+                </div>
+
+                {/* Moveable Resizer Bar */}
+                <div
+                    className={`resizer ${isResizing ? 'resizing' : ''}`}
+                    onMouseDown={handleMouseDown}
                 />
 
                 {selectedNode ? (
                     <CommandEditor
                         selectedNode={selectedNode}
                         nodes={nodes}
+                        onUpdateNodeName={(name) => updateNodeName(selectedNode.id, name)}
                         onAddCommand={(type) => addCommand(selectedNode.id, type)}
                         onUpdateCommand={(cmdId, fields) => updateCommand(selectedNode.id, cmdId, fields)}
                         onDeleteCommand={(cmdId) => deleteCommand(selectedNode.id, cmdId)}
@@ -156,7 +204,6 @@ export default function App() {
                 )}
             </div>
 
-            {/* Import Modal */}
             <ImportModal
                 isOpen={showImportModal}
                 onClose={() => setShowImportModal(false)}
@@ -164,6 +211,12 @@ export default function App() {
                     setNodes(parsedNodes);
                     setSelectedNodeId(mainNodeId);
                 }}
+            />
+
+            <ExportModal
+                isOpen={showExportModal}
+                nodes={nodes}
+                onClose={() => setShowExportModal(false)}
             />
         </div>
     );

@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import type { SongNode } from '../types/gbsong';
 import { player } from '../audio/basic';
-import { Code, Play, Square, Upload } from 'lucide-react';
+import { Code, Play, Square, Upload, Download } from 'lucide-react';
 import './TopNavbar.css';
 
 interface TopNavbarProps {
     nodes: SongNode[];
     selectedNodeId: number;
     onOpenImport: () => void;
+    onOpenExport: () => void;
 }
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ nodes, selectedNodeId, onOpenImport }) => {
+export const TopNavbar: React.FC<TopNavbarProps> = ({ nodes, selectedNodeId, onOpenImport, onOpenExport }) => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
     const handleTogglePlay = () => {
@@ -42,6 +43,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ nodes, selectedNodeId, onO
 
                 <button onClick={onOpenImport} className="primary-btn" title="Import C Header File">
                     <Upload size={14} /> Import .h
+                </button>
+
+                <button onClick={onOpenExport} className="primary-btn" style={{ backgroundColor: '#cba6f7', color: '#11111b' }} title="Save / Export C Header">
+                    <Download size={14} /> Export .h
                 </button>
             </div>
         </header>

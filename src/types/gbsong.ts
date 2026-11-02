@@ -33,5 +33,6 @@ export type Command = DelayCommand | RegisterCommand | CallNodeCommand | ReturnC
 
 export interface SongNode {
     id: number;
+    name?: string;
     commands: Command[];
 }
