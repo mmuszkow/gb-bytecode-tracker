@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { SongNode } from '../types/gbsong';
 import { exportCHeader } from '../loaders/c_export';
 import { Download, Copy, Check } from 'lucide-react';
 import './ExportModal.css';
+import type {SongNode} from "../types/song_node.ts";
 
 interface ExportModalProps {
     isOpen: boolean;

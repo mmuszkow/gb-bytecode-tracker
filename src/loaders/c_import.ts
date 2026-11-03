@@ -1,4 +1,5 @@
-import type { SongNode, Command } from '../types/gbsong';
+import type { Command } from '../types/command.ts';
+import type {SongNode} from "../types/song_node.ts";
 
 export interface ParseResult {
     nodes: SongNode[];

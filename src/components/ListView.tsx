@@ -1,6 +1,6 @@
 import React from 'react';
-import type { SongNode } from '../types/gbsong';
 import { Hash, Trash2 } from 'lucide-react';
+import type {SongNode} from "../types/song_node.ts";
 
 interface ListViewProps {
     nodes: SongNode[];

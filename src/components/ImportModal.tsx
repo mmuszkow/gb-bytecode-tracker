@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import type { SongNode } from '../types/gbsong';
 import { parseCHeader } from '../loaders/c_import.ts';
 import './ImportModal.css';
+import type {SongNode} from "../types/song_node.ts";
 
 interface ImportModalProps {
     isOpen: boolean;

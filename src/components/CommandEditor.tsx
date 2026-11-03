@@ -1,16 +1,16 @@
 import React from 'react';
-import type {
-    SongNode,
-    Command,
-    DelayCommand,
-    RegisterCommand,
-    CallNodeCommand,
-    WaveRamCommand,
-} from '../types/gbsong';
-import { formatCommandHex, GB_REGISTERS, getCommandValidationError } from '../snd_regs';
+import {
+    type Command,
+    type DelayCommand,
+    type RegisterCommand,
+    type CallNodeCommand,
+    type WaveRamCommand, getCommandValidationError, formatCommandHex,
+} from '../types/command.ts';
+import { GB_REGISTERS } from '../snd_regs';
 import { getTypeColor } from '../helpers';
 import { WaveRamVisualizer } from './WaveRamVisualizer';
 import { ArrowUp, ArrowDown, Trash2, AlertCircle } from 'lucide-react';
+import type {SongNode} from "../types/song_node.ts";
 
 interface CommandEditorProps {
     selectedNode: SongNode;

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import type { SongNode } from '../types/gbsong';
-import { player } from '../audio/basic';
+import React from 'react';
 import { Code, Play, Square, Upload, Download } from 'lucide-react';
 import './TopNavbar.css';
+import {useApuPlayer} from "../hooks/useApuPlayer.ts";
+import type {SongNode} from "../types/song_node.ts";
 
 interface TopNavbarProps {
     nodes: SongNode[];
@@ -12,17 +12,7 @@ interface TopNavbarProps {
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({ nodes, selectedNodeId, onOpenImport, onOpenExport }) => {
-    const [isPlaying, setIsPlaying] = useState<boolean>(false);
-
-    const handleTogglePlay = () => {
-        if (isPlaying) {
-            player.stop();
-            setIsPlaying(false);
-        } else {
-            player.start(nodes, selectedNodeId);
-            setIsPlaying(true);
-        }
-    };
+    const { isPlaying, togglePlay } = useApuPlayer();
 
     return (
         <header className="top-navbar">
@@ -33,7 +23,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ nodes, selectedNodeId, onO
 
             <div className="navbar-actions">
                 <button
-                    onClick={handleTogglePlay}
+                    onClick={() => togglePlay(nodes, selectedNodeId)}
                     className="primary-btn"
                     style={{ backgroundColor: isPlaying ? '#f38ba8' : '#a6e3a1' }}
                 >

@@ -1,4 +1,4 @@
-import type {Command} from "./types/gbsong";
+import type {Command} from "./types/command.ts";
 
 export function getTypeColor(type: Command['type']): string {
     switch (type) {

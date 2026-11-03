@@ -1,9 +1,10 @@
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
-import type { SongNode, Command } from '../../types/gbsong';
+import type { Command } from '../../types/command.ts';
 import { GB_REGISTERS } from '../../snd_regs';
 import { getTypeColor } from '../../helpers';
 import { Hash, ArrowRight } from 'lucide-react';
+import type {SongNode} from "../../types/song_node.ts";
 
 interface CustomSongNodeData {
     node: SongNode;

@@ -8,8 +8,8 @@ import {
     MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import type { SongNode } from '../types/gbsong';
 import { CustomSongNode } from './graph/CustomSongNode';
+import type {SongNode} from "../types/song_node.ts";
 
 interface GraphViewProps {
     nodes: SongNode[];

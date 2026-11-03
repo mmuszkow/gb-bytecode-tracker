@@ -3,7 +3,7 @@ import { WaveRamEditModal } from './WaveRamEditModal';
 import { Sliders } from 'lucide-react';
 
 interface WaveRamVisualizerProps {
-    payload: number[];
+    payload: number[]; // 16 bytes
     onChange: (newPayload: number[]) => void;
 }
 
@@ -12,21 +12,28 @@ export const WaveRamVisualizer: React.FC<WaveRamVisualizerProps> = ({
                                                                         onChange,
                                                                     }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const bytes = Array.from({ length: 16 }, (_, i) => payload[i] ?? 0);
+
+    // Unpack 16 bytes into 32 4-bit samples (0..15)
+    const samples: number[] = [];
+    for (let i = 0; i < 16; i++) {
+        const b = payload[i] ?? 0;
+        samples.push((b >> 4) & 0x0f);
+        samples.push(b & 0x0f);
+    }
 
     return (
         <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {/* Interactive Bar Chart Preview */}
+                {/* 32 Column Preview Bar Graph */}
                 <div
                     onClick={() => setIsModalOpen(true)}
-                    title="Click to edit Wave RAM waveform"
+                    title="Click to edit 32-sample Wave RAM waveform"
                     style={{
                         display: 'flex',
                         alignItems: 'flex-end',
-                        gap: '3px',
+                        gap: '2px',
                         height: '42px',
-                        width: '192px',
+                        width: '224px',
                         backgroundColor: '#11111b',
                         padding: '4px 6px',
                         borderRadius: '6px',
@@ -35,20 +42,22 @@ export const WaveRamVisualizer: React.FC<WaveRamVisualizerProps> = ({
                         cursor: 'pointer',
                     }}
                 >
-                    {bytes.map((val, idx) => {
-                        const heightPct = Math.max(6, (val / 255) * 100);
-                        const hexVal = `0x${val.toString(16).padStart(2, '0').toUpperCase()}`;
+                    {samples.map((val, idx) => {
+                        const heightPct = Math.max(8, (val / 15) * 100);
+                        const byteIdx = Math.floor(idx / 2);
+                        const byteAddr = (0x30 + byteIdx).toString(16).toUpperCase();
+                        const nibble = idx % 2 === 0 ? 'Upper' : 'Lower';
 
                         return (
                             <div
                                 key={idx}
-                                title={`Sample [${idx}] (0xFF${(0x30 + idx).toString(16).toUpperCase()}): ${hexVal} (${val})`}
+                                title={`Sample [${idx}] (0xFF${byteAddr} ${nibble}): 0x${val.toString(16).toUpperCase()} (${val})`}
                                 style={{
                                     flex: 1,
                                     height: `${heightPct}%`,
                                     backgroundColor: '#fab387',
-                                    borderRadius: '2px 2px 0 0',
-                                    transition: 'height 0.15s ease',
+                                    borderRadius: '1px 1px 0 0',
+                                    transition: 'height 0.1s ease',
                                 }}
                             />
                         );
@@ -63,10 +72,9 @@ export const WaveRamVisualizer: React.FC<WaveRamVisualizerProps> = ({
                 >
                     <Sliders size={12} /> Edit Wave
                 </button>
-
             </div>
 
-            {/* Modal Dialog */}
+            {/* Wave RAM Edit Modal */}
             <WaveRamEditModal
                 isOpen={isModalOpen}
                 payload={payload}

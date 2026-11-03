@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { SongNode } from '../types/gbsong';
 import { ChevronRight, ChevronDown, Hash, Trash2, Repeat } from 'lucide-react';
+import type {SongNode} from "../types/song_node.ts";
 
 interface TreeViewProps {
     nodes: SongNode[];

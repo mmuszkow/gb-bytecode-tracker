@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import type { SongNode } from '../types/gbsong';
 import { ListView } from './ListView';
 import { GraphView } from './GraphView';
 import { FolderPlus, List, Network } from 'lucide-react';
 import './Sidebar.css';
+import type {SongNode} from "../types/song_node.ts";
 
 interface SidebarProps {
     nodes: SongNode[];

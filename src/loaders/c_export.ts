@@ -1,4 +1,5 @@
-import type { SongNode, Command } from '../types/gbsong';
+import type { Command } from '../types/command.ts';
+import type {SongNode} from "../types/song_node.ts";
 
 export function exportCHeader(nodes: SongNode[], songName: string = 'SONG0'): string {
     // Sort nodes: Main track (ID 999) first, then subroutine nodes ordered by ID

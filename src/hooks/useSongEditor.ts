@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { SongNode, Command } from '../types/gbsong';
+import type { Command } from '../types/command.ts';
+import type {SongNode} from "../types/song_node.ts";
 
 const INITIAL_NODES: SongNode[] = [
     {
