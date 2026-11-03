@@ -17,7 +17,13 @@ body {
   padding: 0;
   background-color: var(--bg-dark);
   color: var(--text-main);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
 }
 
 /* --- App Outer Layout --- */
@@ -187,8 +193,14 @@ body {
   border-radius: 4px;
 }
 
-.input-number { width: 60px; }
-.input-hex { width: 60px; color: var(--accent-yellow); font-family: monospace; }
+.input-number {
+  width: 60px;
+}
+.input-hex {
+  width: 60px;
+  color: var(--accent-yellow);
+  font-family: monospace;
+}
 
 .hint {
   color: #6c7086;
