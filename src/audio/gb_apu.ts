@@ -10,7 +10,7 @@ export class GameBoyAPU {
   // Master Gain & Panning
   private masterGainL: GainNode;
   private masterGainR: GainNode;
-  private merger: ChannelMergerNode;
+  //private merger: ChannelMergerNode;
 
   // --- Channel 1: Pulse 1 with Sweep ---
   private ch1Osc: OscillatorNode | null = null;
@@ -50,7 +50,7 @@ export class GameBoyAPU {
     this.audioCtx = new AudioCtx();
 
     // Master Stereo Routing
-    this.merger = this.audioCtx.createChannelMerger(2);
+    //this.merger = this.audioCtx.createChannelMerger(2);
     this.masterGainL = this.audioCtx.createGain();
     this.masterGainR = this.audioCtx.createGain();
 
@@ -257,7 +257,7 @@ export class GameBoyAPU {
   }
 
   // --- Channel 4 Noise Trigger ---
-  private triggerCh4(nr44: number): void {
+  private triggerCh4(_ /* nr44 */: number): void {
     this.stopCh4();
 
     const nr43 = this.registers[0x12];
