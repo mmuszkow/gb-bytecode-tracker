@@ -7,10 +7,9 @@ export class GameBoyAPU {
   // 64 Byte Hardware Register Map (0xFF10 to 0xFF3F)
   private registers = new Uint8Array(0x40);
 
-  // Master Gain & Panning
+  // Master Gain Outputs (SO2 = Left, SO1 = Right)
   private masterGainL: GainNode;
   private masterGainR: GainNode;
-  //private merger: ChannelMergerNode;
 
   // --- Channel 1: Pulse 1 with Sweep ---
   private ch1Osc: OscillatorNode | null = null;
@@ -20,6 +19,7 @@ export class GameBoyAPU {
   private ch1Vol = 0;
   private ch1EnvTimer: number | null = null;
   private ch1SweepTimer: number | null = null;
+  private ch1LengthTimer: number | null = null;
 
   // --- Channel 2: Pulse 2 ---
   private ch2Osc: OscillatorNode | null = null;
@@ -28,12 +28,14 @@ export class GameBoyAPU {
   private ch2FreqLo = 0;
   private ch2Vol = 0;
   private ch2EnvTimer: number | null = null;
+  private ch2LengthTimer: number | null = null;
 
   // --- Channel 3: Wave RAM ---
   private ch3Src: AudioBufferSourceNode | null = null;
   private ch3Gain: GainNode | null = null;
   private ch3Panner: StereoPannerNode;
   private ch3FreqLo = 0;
+  private ch3LengthTimer: number | null = null;
   private waveBuffer: AudioBuffer;
 
   // --- Channel 4: Noise ---
@@ -42,6 +44,7 @@ export class GameBoyAPU {
   private ch4Panner: StereoPannerNode;
   private ch4Vol = 0;
   private ch4EnvTimer: number | null = null;
+  private ch4LengthTimer: number | null = null;
   private noise7BitBuffer: AudioBuffer;
   private noise15BitBuffer: AudioBuffer;
 
@@ -49,8 +52,7 @@ export class GameBoyAPU {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     this.audioCtx = new AudioCtx();
 
-    // Master Stereo Routing
-    //this.merger = this.audioCtx.createChannelMerger(2);
+    // Master Stereo Terminal Gains (NR50)
     this.masterGainL = this.audioCtx.createGain();
     this.masterGainR = this.audioCtx.createGain();
 
@@ -68,7 +70,7 @@ export class GameBoyAPU {
     this.ch3Panner.connect(this.masterGainL);
     this.ch4Panner.connect(this.masterGainL);
 
-    // Pre-generate Wave RAM buffer (32 samples) and Noise buffers
+    // Pre-generate Wave RAM (32 samples) and Noise LFSR Buffers
     this.waveBuffer = this.audioCtx.createBuffer(1, 32, 65536);
     this.noise7BitBuffer = this.generateNoiseBuffer(7);
     this.noise15BitBuffer = this.generateNoiseBuffer(15);
@@ -89,7 +91,7 @@ export class GameBoyAPU {
 
     this.registers[offset] = val;
 
-    // Route write to specific channel handling
+    // Route write to Wave RAM (0xFF30 to 0xFF3F)
     if (address >= 0xff30 && address <= 0xff3f) {
       this.updateWaveRamByte(address - 0xff30, val);
       return;
@@ -101,60 +103,66 @@ export class GameBoyAPU {
         break; // NR10 Sweep
       case 0xff11:
         this.updatePulseDuty(1, val);
-        break; // NR11 Duty
+        break; // NR11 Duty & Length
       case 0xff12:
         break; // NR12 Envelope
       case 0xff13:
         this.ch1FreqLo = val;
         break; // NR13 Freq Lo
-      case 0xff14: // NR14 Freq Hi + Trigger
+      case 0xff14:
         if (val & 0x80) this.triggerCh1(val);
-        break;
+        break; // NR14 Freq Hi + Trigger
 
       // --- CH2 ---
       case 0xff16:
         this.updatePulseDuty(2, val);
-        break; // NR21 Duty
+        break; // NR21 Duty & Length
       case 0xff17:
         break; // NR22 Envelope
       case 0xff18:
         this.ch2FreqLo = val;
         break; // NR23 Freq Lo
-      case 0xff19: // NR24 Freq Hi + Trigger
+      case 0xff19:
         if (val & 0x80) this.triggerCh2(val);
-        break;
+        break; // NR24 Freq Hi + Trigger
 
       // --- CH3 ---
       case 0xff1a:
         break; // NR30 Wave On/Off
+      case 0xff1b:
+        break; // NR31 Sound Length
       case 0xff1c:
         this.updateCh3Volume(val);
         break; // NR32 Volume Shift
       case 0xff1d:
         this.ch3FreqLo = val;
         break; // NR33 Freq Lo
-      case 0xff1e: // NR34 Freq Hi + Trigger
+      case 0xff1e:
         if (val & 0x80) this.triggerCh3(val);
-        break;
+        break; // NR34 Freq Hi + Trigger
 
       // --- CH4 ---
+      case 0xff20:
+        break; // NR41 Sound Length
       case 0xff21:
         break; // NR42 Envelope
       case 0xff22:
         break; // NR43 Noise Clock/LFSR
-      case 0xff23: // NR44 Trigger
+      case 0xff23:
         if (val & 0x80) this.triggerCh4(val);
-        break;
+        break; // NR44 Trigger
 
-      // --- Master Controls ---
-      case 0xff24: // NR50 Master Volume
+      // --- Master Volume (NR50) ---
+      case 0xff24: {
         const volL = ((val >> 4) & 0x07) / 7.0;
         const volR = (val & 0x07) / 7.0;
         this.masterGainL.gain.setValueAtTime(volL * 0.2, this.audioCtx.currentTime);
         this.masterGainR.gain.setValueAtTime(volR * 0.2, this.audioCtx.currentTime);
         break;
+      }
 
-      case 0xff25: // NR51 Sound Panning Terminal
+      // --- Sound Panning Matrix (NR51) ---
+      case 0xff25:
         this.ch1Panner.pan.setValueAtTime(
           val & 0x11 ? 0 : val & 0x10 ? -1 : 1,
           this.audioCtx.currentTime
@@ -173,7 +181,8 @@ export class GameBoyAPU {
         );
         break;
 
-      case 0xff26: // NR52 Master On/Off
+      // --- Master On/Off (NR52) ---
+      case 0xff26:
         if ((val & 0x80) === 0) this.reset();
         break;
     }
@@ -194,7 +203,6 @@ export class GameBoyAPU {
     this.ch1Osc.setPeriodicWave(this.createPulseWave((nr11 >> 6) & 0x03));
     this.ch1Osc.frequency.setValueAtTime(freqHz, this.audioCtx.currentTime);
 
-    // Envelope
     const nr12 = this.registers[0x02];
     this.ch1Vol = (nr12 >> 4) & 0x0f;
     this.ch1Gain.gain.setValueAtTime(this.ch1Vol / 15.0, this.audioCtx.currentTime);
@@ -205,6 +213,13 @@ export class GameBoyAPU {
 
     this.startEnvelopeTimer(1, nr12);
     this.startSweepTimer(rawFreq);
+
+    // Length Counter (Bit 6 of NR14)
+    if (nr14 & 0x40) {
+      const lengthData = nr11 & 0x3f;
+      const durationMs = ((64 - lengthData) / 256) * 1000;
+      this.ch1LengthTimer = window.setTimeout(() => this.stopCh1(), durationMs);
+    }
   }
 
   // --- Channel 2 Trigger ---
@@ -231,6 +246,13 @@ export class GameBoyAPU {
     this.ch2Osc.start();
 
     this.startEnvelopeTimer(2, nr22);
+
+    // Length Counter (Bit 6 of NR24)
+    if (nr24 & 0x40) {
+      const lengthData = nr21 & 0x3f;
+      const durationMs = ((64 - lengthData) / 256) * 1000;
+      this.ch2LengthTimer = window.setTimeout(() => this.stopCh2(), durationMs);
+    }
   }
 
   // --- Channel 3 Wave RAM Trigger ---
@@ -254,10 +276,17 @@ export class GameBoyAPU {
     this.ch3Src.connect(this.ch3Gain);
     this.ch3Gain.connect(this.ch3Panner);
     this.ch3Src.start();
+
+    // Length Counter (Bit 6 of NR34)
+    if (nr34 & 0x40) {
+      const lengthData = this.registers[0x0b]; // NR31
+      const durationMs = ((256 - lengthData) / 256) * 1000;
+      this.ch3LengthTimer = window.setTimeout(() => this.stopCh3(), durationMs);
+    }
   }
 
   // --- Channel 4 Noise Trigger ---
-  private triggerCh4(_ /* nr44 */: number): void {
+  private triggerCh4(nr44: number): void {
     this.stopCh4();
 
     const nr43 = this.registers[0x12];
@@ -285,6 +314,13 @@ export class GameBoyAPU {
     this.ch4Src.start();
 
     this.startEnvelopeTimer(4, nr42);
+
+    // Length Counter (Bit 6 of NR44)
+    if (nr44 & 0x40) {
+      const lengthData = this.registers[0x10] & 0x3f; // NR41
+      const durationMs = ((64 - lengthData) / 256) * 1000;
+      this.ch4LengthTimer = window.setTimeout(() => this.stopCh4(), durationMs);
+    }
   }
 
   // --- Helpers ---
@@ -396,6 +432,10 @@ export class GameBoyAPU {
   }
 
   private stopCh1(): void {
+    if (this.ch1LengthTimer) {
+      clearTimeout(this.ch1LengthTimer);
+      this.ch1LengthTimer = null;
+    }
     if (this.ch1EnvTimer) clearInterval(this.ch1EnvTimer);
     if (this.ch1SweepTimer) clearInterval(this.ch1SweepTimer);
     if (this.ch1Osc) {
@@ -408,6 +448,10 @@ export class GameBoyAPU {
   }
 
   private stopCh2(): void {
+    if (this.ch2LengthTimer) {
+      clearTimeout(this.ch2LengthTimer);
+      this.ch2LengthTimer = null;
+    }
     if (this.ch2EnvTimer) clearInterval(this.ch2EnvTimer);
     if (this.ch2Osc) {
       try {
@@ -419,6 +463,10 @@ export class GameBoyAPU {
   }
 
   private stopCh3(): void {
+    if (this.ch3LengthTimer) {
+      clearTimeout(this.ch3LengthTimer);
+      this.ch3LengthTimer = null;
+    }
     if (this.ch3Src) {
       try {
         this.ch3Src.stop();
@@ -429,6 +477,10 @@ export class GameBoyAPU {
   }
 
   private stopCh4(): void {
+    if (this.ch4LengthTimer) {
+      clearTimeout(this.ch4LengthTimer);
+      this.ch4LengthTimer = null;
+    }
     if (this.ch4EnvTimer) clearInterval(this.ch4EnvTimer);
     if (this.ch4Src) {
       try {

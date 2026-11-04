@@ -8,19 +8,19 @@ const INITIAL_NODES: SongNode[] = [
     name: 'Boot Jingle',
     commands: [
       { id: 'c-1', type: 'REGISTER_WRITE', registerOffset: 0x01, value: 0x80 },
-      { id: 'c-2', type: 'REGISTER_WRITE', registerOffset: 0x02, value: 0xF3 },
-      { id: 'c-3', type: 'REGISTER_WRITE', registerOffset: 0x15, value: 0xF3 },
+      { id: 'c-2', type: 'REGISTER_WRITE', registerOffset: 0x02, value: 0xf3 },
+      { id: 'c-3', type: 'REGISTER_WRITE', registerOffset: 0x15, value: 0xf3 },
       { id: 'c-4', type: 'REGISTER_WRITE', registerOffset: 0x14, value: 0x77 },
       { id: 'c-5', type: 'DELAY', delay: 62 },
       { id: 'c-6', type: 'REGISTER_WRITE', registerOffset: 0x03, value: 0x83 },
       { id: 'c-7', type: 'REGISTER_WRITE', registerOffset: 0x04, value: 0x87 },
       { id: 'c-8', type: 'DELAY', delay: 5 },
-      { id: 'c-9', type: 'REGISTER_WRITE', registerOffset: 0x03, value: 0xC1 },
+      { id: 'c-9', type: 'REGISTER_WRITE', registerOffset: 0x03, value: 0xc1 },
       { id: 'c-10', type: 'REGISTER_WRITE', registerOffset: 0x04, value: 0x87 },
       { id: 'c-11', type: 'DELAY', delay: 117 },
       { id: 'c-12', type: 'END' },
     ],
-  }
+  },
 ];
 
 export function useSongEditor(initialNodes: SongNode[] = INITIAL_NODES) {
