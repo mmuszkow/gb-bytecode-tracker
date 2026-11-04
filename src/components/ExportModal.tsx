@@ -14,7 +14,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, nodes, onClose
   const [copied, setCopied] = useState<boolean>(false);
   if (!isOpen) return null;
 
-  const headerCode = exportCHeader(nodes, 'SND_SONG0');
+  const headerCode = exportCHeader(nodes, 'SONG0');
 
   const handleCopy = () => {
     navigator.clipboard.writeText(headerCode);
