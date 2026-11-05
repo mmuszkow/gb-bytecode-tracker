@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   type Command,
   type DelayCommand,
@@ -36,6 +36,20 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
   onMoveCommand,
 }) => {
   const defaultDisplayName = selectedNode.id === 999 ? 'Main Track' : `Node #${selectedNode.id}`;
+  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+
+  // Auto-scroll to the row currently being played
+  useEffect(() => {
+    if (activeCommandIndex !== null && activeCommandIndex !== undefined) {
+      const activeRowEl = rowRefs.current[activeCommandIndex];
+      if (activeRowEl) {
+        activeRowEl.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }
+  }, [activeCommandIndex]);
 
   return (
     <div className="main-content">
@@ -103,6 +117,9 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
               return (
                 <React.Fragment key={cmd.id}>
                   <tr
+                    ref={(el) => {
+                      rowRefs.current[idx] = el;
+                    }}
                     className={`${validationErr ? 'has-error' : ''} ${isPlayingRow ? 'playing-row' : ''}`}
                     style={
                       isPlayingRow
