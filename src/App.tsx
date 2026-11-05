@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSongEditor } from './hooks/useSongEditor';
 import { useResizableSidebar } from './hooks/useResizableSidebar';
+import { useApuPlayer } from './hooks/useApuPlayer';
 import { TopNavbar } from './components/TopNavbar';
 import { Sidebar } from './components/Sidebar';
 import { CommandEditor } from './components/CommandEditor';
@@ -25,15 +26,25 @@ export default function App() {
   } = useSongEditor();
 
   const { sidebarWidth, isResizing, handleMouseDown } = useResizableSidebar();
+  const { isPlaying, activeNodeId, activePc, togglePlay } = useApuPlayer();
 
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+  // Automatically update selected node during playback when subroutines jump nodes
+  useEffect(() => {
+    if (isPlaying && activeNodeId !== null) {
+      setSelectedNodeId(activeNodeId);
+    }
+  }, [isPlaying, activeNodeId, setSelectedNodeId]);
 
   return (
     <div className="app-container">
       <TopNavbar
         nodes={nodes}
         selectedNodeId={selectedNodeId}
+        isPlaying={isPlaying}
+        onTogglePlay={() => togglePlay(nodes, selectedNodeId)}
         onOpenImport={() => setShowImportModal(true)}
         onOpenExport={() => setShowExportModal(true)}
       />
@@ -55,6 +66,7 @@ export default function App() {
           <CommandEditor
             selectedNode={selectedNode}
             nodes={nodes}
+            activeCommandIndex={isPlaying && activeNodeId === selectedNode.id ? activePc : null}
             onUpdateNodeName={(name) => updateNodeName(selectedNode.id, name)}
             onAddCommand={(type) => addCommand(selectedNode.id, type)}
             onUpdateCommand={(cmdId, fields) => updateCommand(selectedNode.id, cmdId, fields)}

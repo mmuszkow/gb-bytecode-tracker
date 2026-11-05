@@ -17,6 +17,7 @@ import type { SongNode } from '../types/song_node.ts';
 interface CommandEditorProps {
   selectedNode: SongNode;
   nodes: SongNode[];
+  activeCommandIndex?: number | null;
   onUpdateNodeName: (name: string) => void;
   onAddCommand: (type: Command['type']) => void;
   onUpdateCommand: (commandId: string, updatedFields: Partial<Command>) => void;
@@ -27,6 +28,7 @@ interface CommandEditorProps {
 export const CommandEditor: React.FC<CommandEditorProps> = ({
   selectedNode,
   nodes,
+  activeCommandIndex,
   onUpdateNodeName,
   onAddCommand,
   onUpdateCommand,
@@ -96,12 +98,27 @@ export const CommandEditor: React.FC<CommandEditorProps> = ({
           <tbody>
             {selectedNode.commands.map((cmd, idx) => {
               const validationErr = getCommandValidationError(cmd, nodes);
+              const isPlayingRow = activeCommandIndex === idx;
+
               return (
                 <React.Fragment key={cmd.id}>
-                  <tr className={validationErr ? 'has-error' : ''}>
+                  <tr
+                    className={`${validationErr ? 'has-error' : ''} ${isPlayingRow ? 'playing-row' : ''}`}
+                    style={
+                      isPlayingRow
+                        ? {
+                            backgroundColor: 'rgba(166, 227, 161, 0.18)',
+                            outline: '1px solid #a6e3a1',
+                          }
+                        : undefined
+                    }
+                  >
                     <td>
                       <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 'bold' }}>{idx + 1}</span>
+                        <span style={{ fontWeight: 'bold' }}>
+                          {isPlayingRow ? '▶ ' : ''}
+                          {idx + 1}
+                        </span>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <button
                             disabled={idx === 0}

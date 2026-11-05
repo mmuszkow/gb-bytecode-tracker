@@ -5,19 +5,36 @@ import type { SongNode } from '../types/song_node.ts';
 
 export function useApuPlayer() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const apuRef = useRef<GameBoyAPU | null>(null);
+  const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+  const [activePc, setActivePc] = useState<number | null>(null);
 
-  // Execution Driver State
+  const apuRef = useRef<GameBoyAPU | null>(null);
   const timerRef = useRef<number | null>(null);
+
   const currentNodesRef = useRef<SongNode[]>([]);
   const currentNodeIdRef = useRef<number>(0);
   const pcRef = useRef<number>(0);
   const returnStackRef = useRef<Array<{ nodeId: number; pc: number }>>([]);
   const delayCounterRef = useRef<number>(0);
 
+  const lastReportedNodeIdRef = useRef<number | null>(null);
+  const lastReportedPcRef = useRef<number | null>(null);
+
   if (!apuRef.current) {
     apuRef.current = new GameBoyAPU();
   }
+
+  const syncState = useCallback(() => {
+    if (
+      currentNodeIdRef.current !== lastReportedNodeIdRef.current ||
+      pcRef.current !== lastReportedPcRef.current
+    ) {
+      lastReportedNodeIdRef.current = currentNodeIdRef.current;
+      lastReportedPcRef.current = pcRef.current;
+      setActiveNodeId(currentNodeIdRef.current);
+      setActivePc(pcRef.current);
+    }
+  }, []);
 
   const stop = useCallback(() => {
     if (timerRef.current !== null) {
@@ -28,12 +45,16 @@ export function useApuPlayer() {
     returnStackRef.current = [];
     delayCounterRef.current = 0;
     pcRef.current = 0;
+    lastReportedNodeIdRef.current = null;
+    lastReportedPcRef.current = null;
 
     if (apuRef.current) {
       apuRef.current.reset();
     }
 
     setIsPlaying(false);
+    setActiveNodeId(null);
+    setActivePc(null);
   }, []);
 
   const handleReturnOrEnd = useCallback(() => {
@@ -41,10 +62,11 @@ export function useApuPlayer() {
       const frame = returnStackRef.current.pop()!;
       currentNodeIdRef.current = frame.nodeId;
       pcRef.current = frame.pc;
+      syncState();
     } else {
       stop();
     }
-  }, [stop]);
+  }, [stop, syncState]);
 
   const executeCommand = useCallback(
     (cmd: Command) => {
@@ -80,6 +102,7 @@ export function useApuPlayer() {
             });
             currentNodeIdRef.current = cmd.targetNodeId;
             pcRef.current = 0;
+            syncState();
           } else {
             pcRef.current++;
           }
@@ -98,7 +121,7 @@ export function useApuPlayer() {
           break;
       }
     },
-    [handleReturnOrEnd, stop]
+    [handleReturnOrEnd, stop, syncState]
   );
 
   const vblankTick = useCallback(() => {
@@ -114,10 +137,11 @@ export function useApuPlayer() {
         break;
       }
 
+      syncState();
       const cmd = node.commands[pcRef.current];
       executeCommand(cmd);
     }
-  }, [executeCommand, handleReturnOrEnd]);
+  }, [executeCommand, handleReturnOrEnd, syncState]);
 
   const play = useCallback(
     (nodes: SongNode[], startNodeId: number = 0) => {
@@ -136,7 +160,12 @@ export function useApuPlayer() {
       returnStackRef.current = [];
       delayCounterRef.current = 0;
 
+      lastReportedNodeIdRef.current = startNodeId;
+      lastReportedPcRef.current = 0;
+      setActiveNodeId(startNodeId);
+      setActivePc(0);
       setIsPlaying(true);
+
       timerRef.current = window.setInterval(vblankTick, 1000 / 60);
     },
     [stop, vblankTick]
@@ -161,6 +190,8 @@ export function useApuPlayer() {
 
   return {
     isPlaying,
+    activeNodeId,
+    activePc,
     play,
     stop,
     togglePlay,
